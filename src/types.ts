@@ -1,13 +1,13 @@
 import { CSSProperties, ReactNode } from "react";
 
-export interface TabProps {
+export interface ChipTabProps {
     key: string;
     label: string;
     icon?: ReactNode;
     hideCloseButton?: boolean; // close 버튼 숨김 여부
 }
 
-export interface TabStateStyles {
+export interface ChipTabStateStyles {
     borderColor?: string;
     backgroundColor?: string;
     textColor?: string;
@@ -30,9 +30,9 @@ export interface ChipTabsStyles {
     gap?: string | number; // 탭 간격
 
     // 탭 상태별 스타일
-    defaultTab?: TabStateStyles;
-    selectedTab?: TabStateStyles;
-    hoverTab?: Omit<TabStateStyles, "fontWeight">; // hover에는 fontWeight 불필요
+    defaultTab?: ChipTabStateStyles;
+    selectedTab?: ChipTabStateStyles;
+    hoverTab?: Omit<ChipTabStateStyles, "fontWeight">; // hover에는 fontWeight 불필요
 
     // Close 버튼 스타일
     closeButton?: CloseButtonStyles;
@@ -59,13 +59,14 @@ export interface ChipTabsProps {
     keyboardNavigation?: boolean; // 방향키로 탭 이동 가능 여부 (기본값 true)
     onChange?: (event: ChangeEvent) => void; // 탭 선택 변경 핸들러
     onClose?: (key: string) => boolean | Promise<boolean>; // close 버튼 클릭 핸들러 - true 반환 시 탭 제거
+    onLoaded?: (tabs: ChipTabProps[], selectedKey: string) => void; // 쿠키에서 로드된 탭들을 반환
     onReorder?: (event: ReorderEvent) => void; // 탭 순서 변경 핸들러
     selectedCookieName?: string; // 설정 시 selectedKey를 쿠키에 자동 저장/불러오기
     selectedKey?: string; // 외부에서 선택된 키를 제어할 수 있도록 추가
     showArrows?: boolean; // 스크롤 화살표 표시 여부 (기본값 true, 비활성화 시 희미하게 표시)
     showCloseButton?: boolean; // close 버튼 표시 여부
     styles?: ChipTabsStyles; // 스타일 커스터마이징
-    tabs: TabProps[];
+    tabs: ChipTabProps[];
     tabsCookieName?: string; // 설정 시 tabs 배열을 쿠키에 자동 저장/불러오기
     wrap?: boolean; // flex-wrap 사용 여부 (false면 좌우 스크롤)
 }

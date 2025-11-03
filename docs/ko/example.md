@@ -326,13 +326,13 @@ function CustomStyledExample() {
 import { useState } from "react";
 import {
     ChipTabs,
-    type TabProps,
+    type ChipTabProps,
     type ChangeEvent,
     type ReorderEvent,
 } from "@ehfuse/chip-tabs";
 
 function AdvancedExample() {
-    const [tabs, setTabs] = useState<TabProps[]>([
+    const [tabs, setTabs] = useState<ChipTabProps[]>([
         { key: "overview", label: "개요", hideCloseButton: true },
         { key: "details", label: "상세정보" },
         { key: "settings", label: "설정" },
@@ -469,7 +469,7 @@ const tabs = [
     { key: "public", label: "공개" },
     isAdmin && { key: "admin", label: "관리자" },
     isPremium && { key: "premium", label: "프리미엄" },
-].filter(Boolean) as TabProps[];
+].filter(Boolean) as ChipTabProps[];
 ```
 
 ---

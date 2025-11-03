@@ -1,5 +1,5 @@
 import React, { CSSProperties, useEffect, useRef, useState } from "react";
-import type { TabProps, ChipTabsProps } from "./types";
+import type { ChipTabProps, ChipTabsProps } from "./types";
 import { CloseIcon, ChevronLeftIcon, ChevronRightIcon } from "./icons";
 import {
     DndContext,
@@ -42,6 +42,7 @@ function ScrollArrow({ direction, isEnabled, onClick }: ScrollArrowProps) {
         opacity: isEnabled ? 1 : 0.3,
         pointerEvents: isEnabled ? "auto" : "none",
         transition: "opacity 0.2s",
+        userSelect: "none",
         ...(direction === "left" ? { left: "0" } : { right: "0" }),
         // 그라데이션 배경
         background:
@@ -90,16 +91,9 @@ function ScrollArrow({ direction, isEnabled, onClick }: ScrollArrowProps) {
     );
 }
 
-// 탭 애니메이션 상태 인터페이스
-interface TabAnimationState {
-    isRemoving: boolean;
-    opacity: number;
-    width: number;
-}
-
 // Sortable 탭 아이템 컴포넌트
 interface SortableTabProps {
-    tag: TabProps;
+    tag: ChipTabProps;
     isSelected: boolean;
     isTabHovered: boolean;
     isCloseHovered: boolean;
@@ -114,14 +108,11 @@ interface SortableTabProps {
     onCloseMouseLeave: () => void;
     setButtonRef: (el: HTMLDivElement | null, key: string) => void;
     draggable?: boolean;
-    animationState?: TabAnimationState;
 }
 
 function SortableTab({
     tag,
     isSelected,
-    isTabHovered,
-    isCloseHovered,
     showCloseButton,
     tabStyle,
     closeButtonStyle,
@@ -133,7 +124,6 @@ function SortableTab({
     onCloseMouseLeave,
     setButtonRef,
     draggable = false,
-    animationState,
 }: SortableTabProps) {
     const {
         attributes,
@@ -147,19 +137,9 @@ function SortableTab({
     const style: CSSProperties = {
         ...tabStyle,
         transform: CSS.Transform.toString(transform),
-        transition: animationState?.isRemoving
-            ? "opacity 0.3s ease-out, width 0.3s ease-out, margin 0.3s ease-out, padding 0.3s ease-out"
-            : transition,
-        opacity: isDragging ? 0.5 : animationState?.opacity ?? 1,
+        transition: transition,
+        opacity: isDragging ? 0.5 : 1,
         cursor: draggable ? "grab" : tabStyle.cursor,
-        ...(animationState?.isRemoving && {
-            width: `${animationState.width}px`,
-            marginLeft: animationState.width < 50 ? "0" : undefined,
-            marginRight: animationState.width < 50 ? "0" : undefined,
-            paddingLeft: animationState.width < 50 ? "0" : undefined,
-            paddingRight: animationState.width < 50 ? "0" : undefined,
-            overflow: "hidden",
-        }),
     };
 
     return (
@@ -222,25 +202,37 @@ export function ChipTabs({
     styles = {},
     onChange,
     onClose,
+    onLoaded,
     onReorder,
     selectedCookieName,
     tabsCookieName,
 }: ChipTabsProps) {
-    // 쿠키에서 초기 상태 불러오기
-    const getInitialState = () => {
-        let initialTabs = tagItems;
-        let initialSelectedKey = defaultSelected;
-        let hasSelectionCookie = false;
-        let hasTabsCookie = false;
+    // 쿠키에서 초기 상태 불러오기 (첫 마운트시에만)
+    const [isInitialized, setIsInitialized] = useState(false);
+    const [selectedTag, setSelectedTag] = useState<string>(
+        selectedKey || defaultSelected
+    );
+
+    // tabsCookieName이 있으면 초기에는 빈 배열로 시작 (쿠키 로드 전까지)
+    const [tabs, setTabs] = useState<ChipTabProps[]>(
+        tabsCookieName ? [] : tagItems
+    );
+
+    // 첫 마운트시 쿠키에서 로드
+    useEffect(() => {
+        if (isInitialized) return;
+
+        let cookieTabs = tagItems;
+        let cookieSelectedKey = selectedKey || defaultSelected;
+        let hasCookieData = false;
 
         // tabs 쿠키 확인
         if (tabsCookieName) {
             const savedTabs = getCookie(tabsCookieName);
             if (savedTabs) {
                 try {
-                    const parsed = JSON.parse(decodeURIComponent(savedTabs));
-                    initialTabs = parsed;
-                    hasTabsCookie = true;
+                    cookieTabs = JSON.parse(decodeURIComponent(savedTabs));
+                    hasCookieData = true;
                 } catch (e) {
                     console.warn("Failed to parse tabs cookie:", e);
                 }
@@ -251,27 +243,25 @@ export function ChipTabs({
         if (selectedCookieName) {
             const savedSelection = getCookie(selectedCookieName);
             if (savedSelection) {
-                initialSelectedKey = savedSelection;
-                hasSelectionCookie = true;
+                cookieSelectedKey = savedSelection;
             }
         }
 
-        return {
-            tabs: initialTabs,
-            selectedKey: initialSelectedKey,
-            hasSelectionCookie,
-            hasTabsCookie,
-        };
-    };
+        // 쿠키 데이터가 없으면 props 사용, 있으면 쿠키 사용
+        if (!hasCookieData && tabsCookieName) {
+            // 쿠키 이름은 있지만 데이터가 없는 경우 props 사용
+            cookieTabs = tagItems;
+        }
 
-    const initialState = getInitialState();
-    const hasSelectionCookieRef = useRef(initialState.hasSelectionCookie);
-    const hasTabsCookieRef = useRef(initialState.hasTabsCookie);
+        setTabs(cookieTabs);
+        setSelectedTag(cookieSelectedKey);
+        setIsInitialized(true);
 
-    const [selectedTag, setSelectedTag] = useState<string>(
-        initialState.selectedKey
-    );
-    const [tabs, setTabs] = useState<TabProps[]>(initialState.tabs);
+        // onLoaded 콜백으로 쿠키에서 로드된 값들을 사용자에게 알려줌
+        if (onLoaded) {
+            onLoaded(cookieTabs, cookieSelectedKey);
+        }
+    }, []); // 빈 dependency array로 첫 마운트시에만 실행
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [startX, setStartX] = useState(0);
@@ -279,19 +269,29 @@ export function ChipTabs({
     const [showLeftArrow, setShowLeftArrow] = useState(false);
     const [showRightArrow, setShowRightArrow] = useState(false);
 
-    // tabs prop이 변경되면 내부 상태 업데이트 (쿠키가 있으면 무시)
+    // tabs prop이 변경되면 내부 상태 업데이트하고 쿠키도 업데이트
     useEffect(() => {
-        if (!hasTabsCookieRef.current) {
-            setTabs(tagItems);
-        }
-    }, [tagItems]);
+        if (!isInitialized) return; // 초기화 전에는 실행하지 않음
 
-    // tabs 쿠키에 저장
+        setTabs(tagItems);
+
+        // 쿠키 업데이트
+        if (tabsCookieName) {
+            setCookie(
+                tabsCookieName,
+                encodeURIComponent(JSON.stringify(tagItems))
+            );
+        }
+    }, [tagItems, isInitialized, tabsCookieName]);
+
+    // 내부 tabs 상태가 변경되면 쿠키 저장 (사용자가 탭을 추가/삭제할 때)
     useEffect(() => {
+        if (!isInitialized) return;
+
         if (tabsCookieName) {
             setCookie(tabsCookieName, encodeURIComponent(JSON.stringify(tabs)));
         }
-    }, [tabs, tabsCookieName]);
+    }, [tabs, tabsCookieName, isInitialized]);
 
     // selectedKey 쿠키에 저장
     useEffect(() => {
@@ -333,19 +333,33 @@ export function ChipTabs({
         }
     };
 
-    // selectedKey prop이 변경되면 내부 상태 업데이트 (selection 쿠키가 있을 때만 무시)
+    // selectedKey prop이 변경되면 내부 상태 업데이트하고 쿠키도 업데이트
     useEffect(() => {
-        if (selectedKey !== undefined && !hasSelectionCookieRef.current) {
-            setSelectedTag(selectedKey);
-        }
-    }, [selectedKey]);
+        if (!isInitialized) return;
 
-    // defaultSelected prop이 변경되면 내부 상태 업데이트 (selection 쿠키가 있을 때만 무시)
-    useEffect(() => {
-        if (!selectedKey && defaultSelected && !hasSelectionCookieRef.current) {
-            setSelectedTag(defaultSelected);
+        if (selectedKey !== undefined) {
+            setSelectedTag(selectedKey);
+
+            // 쿠키 업데이트
+            if (selectedCookieName) {
+                setCookie(selectedCookieName, selectedKey);
+            }
         }
-    }, [defaultSelected, selectedKey]);
+    }, [selectedKey, isInitialized, selectedCookieName]);
+
+    // defaultSelected prop이 변경되면 내부 상태 업데이트
+    useEffect(() => {
+        if (!isInitialized) return;
+
+        if (!selectedKey && defaultSelected) {
+            setSelectedTag(defaultSelected);
+
+            // 쿠키 업데이트
+            if (selectedCookieName) {
+                setCookie(selectedCookieName, defaultSelected);
+            }
+        }
+    }, [defaultSelected, selectedKey, isInitialized, selectedCookieName]);
 
     // 스크롤 화살표 표시 여부 계산
     const shouldShowArrows = !wrap && showArrows !== false;
@@ -487,6 +501,16 @@ export function ChipTabs({
         setIsDragging(false);
     };
 
+    // 버튼 레퍼런스 관리 (스크롤을 위해 필요)
+    const buttonRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
+
+    // ref 연결 콜백 함수
+    const setButtonRef = (element: HTMLDivElement | null, key: string) => {
+        if (element) {
+            buttonRefs.current.set(key, element);
+        }
+    };
+
     // 선택된 탭으로 스크롤
     const scrollToTab = (tabKey: string) => {
         if (!scrollContainerRef.current || wrap) return;
@@ -579,79 +603,54 @@ export function ChipTabs({
     const handleCloseClick = async (event: React.MouseEvent, key: string) => {
         event.stopPropagation(); // 부모 클릭 이벤트 방지
 
-        // onClose 콜백이 있으면 호출하고 결과 확인
+        // onClose 콜백을 호출해서 삭제 허용 여부 확인
         if (onClose) {
             const result = await onClose(key);
             if (result === false) {
-                return; // 취소된 경우 애니메이션 없이 종료
+                return; // 삭제 취소
             }
         }
 
-        // 애니메이션 시작
-        const tabElement = buttonRefs.current.get(key);
-        if (tabElement) {
-            const initialWidth = tabElement.offsetWidth;
+        // 삭제될 탭이 현재 선택된 탭인지 확인
+        const closingIndex = tabs.findIndex((tab) => tab.key === key);
+        const isSelectedTab = selectedTag === key;
 
-            // 애니메이션 상태 설정
-            setAnimatingTabs((prev) =>
-                new Map(prev).set(key, {
-                    isRemoving: true,
-                    opacity: 1,
-                    width: initialWidth,
-                })
-            );
+        // 탭 제거
+        setTabs((prevTabs) => {
+            const newTabs = prevTabs.filter((tab) => tab.key !== key);
 
-            // fadeout 애니메이션
-            setTimeout(() => {
-                setAnimatingTabs((prev) => {
-                    const newMap = new Map(prev);
-                    const state = newMap.get(key);
-                    if (state) {
-                        newMap.set(key, {
-                            ...state,
-                            opacity: 0,
-                            width: 0,
-                        });
-                    }
-                    return newMap;
-                });
-            }, 50);
+            // 삭제된 탭이 선택된 탭이었다면 이전 탭을 선택
+            if (isSelectedTab && newTabs.length > 0) {
+                let newSelectedIndex;
 
-            // 애니메이션 완료 후 탭 제거
-            setTimeout(() => {
-                setTabs((prevTabs) =>
-                    prevTabs.filter((tab) => tab.key !== key)
-                );
-                setAnimatingTabs((prev) => {
-                    const newMap = new Map(prev);
-                    newMap.delete(key);
-                    return newMap;
-                });
-            }, 350);
-        } else {
-            // 엘리먼트를 찾을 수 없으면 즉시 제거
-            setTabs((prevTabs) => prevTabs.filter((tab) => tab.key !== key));
-        }
-    };
+                // 항상 이전 탭을 선택 (첫 번째 탭이 삭제되면 다음 탭 선택)
+                if (closingIndex > 0) {
+                    // 이전 탭이 있으면 이전 탭 선택
+                    newSelectedIndex = closingIndex - 1;
+                } else {
+                    // 첫 번째 탭이 삭제되면 새로운 첫 번째 탭(인덱스 0) 선택
+                    newSelectedIndex = 0;
+                }
 
-    // 버튼 레퍼런스 관리
-    const buttonRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
+                const newSelectedKey = newTabs[newSelectedIndex].key;
+                setSelectedTag(newSelectedKey);
 
-    // ref 연결 콜백 함수 추가
-    const setButtonRef = (element: HTMLDivElement | null, key: string) => {
-        if (element) {
-            buttonRefs.current.set(key, element);
-        }
+                // onChange 콜백 호출
+                if (onChange) {
+                    onChange({
+                        selectedIndex: newSelectedIndex,
+                        previousIndex: closingIndex,
+                    });
+                }
+            }
+
+            return newTabs;
+        });
     };
 
     // Hover 효과를 위한 상태 추가
     const [hoveredTab, setHoveredTab] = useState<string | null>(null);
     const [hoveredClose, setHoveredClose] = useState<string | null>(null);
-
-    // 애니메이션 상태 관리
-    const [animatingTabs, setAnimatingTabs] = useState<
-        Map<string, TabAnimationState>
-    >(new Map());
 
     // 기본값 설정
     const {
@@ -669,6 +668,53 @@ export function ChipTabs({
         closeButtonSelected: closeButtonSelectedStyles = {},
         customStyles = {},
     } = styles;
+
+    // 실제 탭 높이 계산 (fontSize + paddingY*2 + borderWidth*2)
+    const calculateTabHeight = (): string => {
+        if (height) return typeof height === "string" ? height : `${height}px`; // 사용자가 명시적으로 height를 설정한 경우
+
+        // rem 단위를 픽셀로 변환하기 위한 기본 값 (보통 16px)
+        const remToPixel = 16;
+
+        // fontSize를 픽셀로 변환
+        const fontSizeStr =
+            typeof fontSize === "string" ? fontSize : `${fontSize}px`;
+        const fontSizeInPx = fontSizeStr.endsWith("rem")
+            ? parseFloat(fontSizeStr) * remToPixel
+            : parseFloat(fontSizeStr);
+
+        // paddingY를 픽셀로 변환
+        const paddingYStr =
+            typeof paddingY === "string" ? paddingY : `${paddingY}px`;
+        const paddingYInPx = paddingYStr.endsWith("rem")
+            ? parseFloat(paddingYStr) * remToPixel
+            : parseFloat(paddingYStr);
+
+        // borderWidth를 픽셀로 변환
+        const borderWidthStr =
+            typeof borderWidth === "string" ? borderWidth : `${borderWidth}px`;
+        const borderWidthInPx = parseFloat(borderWidthStr);
+
+        // 실제 측정값을 기반으로 한 정확한 높이 계산
+        // 기본값 (fontSize: 0.875rem, paddingY: 0.3rem, borderWidth: 1px)에서 실제 높이는 약 32.92px
+        const baseHeight = 32.92; // 기본 설정에서의 실제 측정값
+        const baseFontSize = 14; // 0.875rem * 16px
+        const basePaddingY = 4.8; // 0.3rem * 16px
+        const baseBorderWidth = 1;
+
+        // 현재 설정값과 기본값의 비율을 계산하여 높이 조정
+        const fontRatio = fontSizeInPx / baseFontSize;
+        const paddingRatio = paddingYInPx / basePaddingY;
+        const borderRatio = borderWidthInPx / baseBorderWidth;
+
+        // 각 요소의 기여도를 고려한 총 높이 계산
+        const adjustedHeight =
+            baseHeight * ((fontRatio + paddingRatio + borderRatio) / 3);
+
+        return `${adjustedHeight / remToPixel}rem`;
+    };
+
+    const calculatedHeight = calculateTabHeight();
 
     // 각 상태별 기본값 설정
     const defaultBorderColor = defaultTab.borderColor ?? "#d1d5db";
@@ -693,6 +739,7 @@ export function ChipTabs({
         display: "flex",
         flexDirection: "row",
         gap,
+        minHeight: calculatedHeight, // 계산된 탭 높이로 최소 높이 유지
         ...(wrap ? { flexWrap: "wrap" } : {}),
         ...(!wrap
             ? {
@@ -712,6 +759,7 @@ export function ChipTabs({
         display: "flex",
         flexDirection: "row",
         gap,
+        minHeight: calculatedHeight, // 계산된 탭 높이로 최소 높이 유지
         ...(wrap ? { flexWrap: "wrap" } : { flexWrap: "nowrap" }),
         ...(!wrap && shouldShowArrows
             ? {
@@ -732,6 +780,7 @@ export function ChipTabs({
     ): CSSProperties => ({
         display: "flex",
         alignItems: "center",
+        justifyContent: "center",
         cursor: "pointer",
         borderRadius,
         border: `${borderWidth} solid`,
@@ -747,7 +796,7 @@ export function ChipTabs({
         WebkitUserSelect: "none",
         MozUserSelect: "none",
         msUserSelect: "none",
-        ...(height ? { height } : {}),
+        // height는 탭 버튼에 적용하지 않음 (자연스러운 높이 사용)
         ...(isSelected
             ? {
                   borderColor: selectedBorderColor,
@@ -794,8 +843,8 @@ export function ChipTabs({
     });
 
     const tabContent = (
-        <div style={innerContainerStyle}>
-            {tabs.map((tag: TabProps) => {
+        <div className="chip-tab-content" style={innerContainerStyle}>
+            {tabs.map((tag: ChipTabProps) => {
                 const isSelected = selectedTag === tag.key;
                 const isTabHovered = hoveredTab === tag.key;
                 const isCloseHovered = hoveredClose === tag.key;
@@ -826,7 +875,6 @@ export function ChipTabs({
                         onCloseMouseLeave={() => setHoveredClose(null)}
                         setButtonRef={setButtonRef}
                         draggable={draggable}
-                        animationState={animatingTabs.get(tag.key)}
                     />
                 );
             })}
@@ -834,7 +882,14 @@ export function ChipTabs({
     );
 
     return (
-        <div style={{ position: "relative", overflow: "hidden" }}>
+        <div
+            className="chip-tabs-container"
+            style={{
+                position: "relative",
+                overflow: "hidden",
+                minHeight: calculatedHeight,
+            }}
+        >
             {!wrap && shouldShowArrows && (
                 <ScrollArrow
                     direction="left"
@@ -847,6 +902,7 @@ export function ChipTabs({
                 style={{
                     ...containerStyle,
                     outline: "none",
+                    minHeight: calculatedHeight, // 스크롤 컨테이너도 계산된 높이로 최소 높이 유지
                 }}
                 className={className}
                 tabIndex={keyboardNavigation ? 0 : undefined}

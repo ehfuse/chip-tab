@@ -26,7 +26,7 @@
 
 | Prop                                        | Type                                           | Default | Required | Description                             |
 | ------------------------------------------- | ---------------------------------------------- | ------- | -------- | --------------------------------------- |
-| [`tabs`](#tabs--required)                   | `TabProps[]`                                   | -       | ✅       | Tab list to display                     |
+| [`tabs`](#tabs--required)                   | `ChipTabProps[]`                                   | -       | ✅       | Tab list to display                     |
 | [`selectedKey`](#selectedkey)               | `string`                                       | -       | -        | Currently selected tab key (controlled) |
 | [`defaultSelected`](#defaultselected)       | `string`                                       | -       | -        | Initial selected tab (uncontrolled)     |
 | [`wrap`](#wrap)                             | `boolean`                                      | `true`  | -        | Multi-line wrap enabled                 |
@@ -49,7 +49,7 @@
 The list of tabs to display.
 
 ```tsx
-interface TabProps {
+interface ChipTabProps {
     key: string; // Unique identifier for the tab
     label: string; // Text displayed on the tab
     icon?: ReactNode; // Optional icon
@@ -167,9 +167,9 @@ interface ChipTabsStyles {
     gap?: string | number;
 
     // Tab state styles
-    defaultTab?: TabStateStyles;
-    selectedTab?: TabStateStyles;
-    hoverTab?: Omit<TabStateStyles, "fontWeight">;
+    defaultTab?: ChipTabStateStyles;
+    selectedTab?: ChipTabStateStyles;
+    hoverTab?: Omit<ChipTabStateStyles, "fontWeight">;
 
     // Close button styles
     closeButton?: CloseButtonStyles;
@@ -179,7 +179,7 @@ interface ChipTabsStyles {
     customStyles?: CSSProperties;
 }
 
-interface TabStateStyles {
+interface ChipTabStateStyles {
     borderColor?: string;
     backgroundColor?: string;
     textColor?: string;
@@ -313,9 +313,9 @@ All types are exported from the package:
 ```tsx
 import type {
     ChipTabsProps,
-    TabProps,
+    ChipTabProps,
     ChipTabsStyles,
-    TabStateStyles,
+    ChipTabStateStyles,
     CloseButtonStyles,
     ChangeEvent,
     ReorderEvent,

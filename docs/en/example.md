@@ -337,13 +337,13 @@ Real-world example using multiple features together.
 import { useState } from "react";
 import {
     ChipTabs,
-    type TabProps,
+    type ChipTabProps,
     type ChangeEvent,
     type ReorderEvent,
 } from "@ehfuse/chip-tabs";
 
 function AdvancedExample() {
-    const [tabs, setTabs] = useState<TabProps[]>([
+    const [tabs, setTabs] = useState<ChipTabProps[]>([
         { key: "overview", label: "Overview", hideCloseButton: true },
         { key: "details", label: "Details" },
         { key: "settings", label: "Settings" },
@@ -480,7 +480,7 @@ const tabs = [
     { key: "public", label: "Public" },
     isAdmin && { key: "admin", label: "Admin" },
     isPremium && { key: "premium", label: "Premium" },
-].filter(Boolean) as TabProps[];
+].filter(Boolean) as ChipTabProps[];
 ```
 
 ## More Examples

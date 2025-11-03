@@ -3,7 +3,7 @@ export type {
     ChipTabsProps as TabsProps,
     ChipTabsProps,
     ChipTabsStyles,
-    TabStateStyles,
+    ChipTabStateStyles,
     CloseButtonStyles,
     ChangeEvent,
     ReorderEvent,

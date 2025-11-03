@@ -18,7 +18,7 @@
 
 | Prop                                        | 타입                                           | 기본값  | 필수 | 설명                                 |
 | ------------------------------------------- | ---------------------------------------------- | ------- | ---- | ------------------------------------ |
-| [`tabs`](#tabs--필수)                       | `TabProps[]`                                   | -       | ✅   | 표시할 탭 목록                       |
+| [`tabs`](#tabs--필수)                       | `ChipTabProps[]`                                   | -       | ✅   | 표시할 탭 목록                       |
 | [`selectedKey`](#selectedkey)               | `string`                                       | -       | -    | 현재 선택된 탭의 key (제어 컴포넌트) |
 | [`defaultSelected`](#defaultselected)       | `string`                                       | -       | -    | 초기 선택 탭 (비제어 컴포넌트)       |
 | [`wrap`](#wrap)                             | `boolean`                                      | `true`  | -    | 여러 줄 줄바꿈 여부                  |
@@ -41,7 +41,7 @@
 표시할 탭 목록입니다.
 
 ```tsx
-interface TabProps {
+interface ChipTabProps {
     key: string; // 탭의 고유 식별자
     label: string; // 탭에 표시될 텍스트
     icon?: ReactNode; // 선택적 아이콘
@@ -159,9 +159,9 @@ interface ChipTabsStyles {
     gap?: string | number;
 
     // 탭 상태별 스타일
-    defaultTab?: TabStateStyles;
-    selectedTab?: TabStateStyles;
-    hoverTab?: Omit<TabStateStyles, "fontWeight">;
+    defaultTab?: ChipTabStateStyles;
+    selectedTab?: ChipTabStateStyles;
+    hoverTab?: Omit<ChipTabStateStyles, "fontWeight">;
 
     // 닫기 버튼 스타일
     closeButton?: CloseButtonStyles;
@@ -171,7 +171,7 @@ interface ChipTabsStyles {
     customStyles?: CSSProperties;
 }
 
-interface TabStateStyles {
+interface ChipTabStateStyles {
     borderColor?: string;
     backgroundColor?: string;
     textColor?: string;
@@ -308,9 +308,9 @@ const [tabs, setTabs] = useState(initialTabs);
 ```tsx
 import type {
     ChipTabsProps,
-    TabProps,
+    ChipTabProps,
     ChipTabsStyles,
-    TabStateStyles,
+    ChipTabStateStyles,
     CloseButtonStyles,
     ChangeEvent,
     ReorderEvent,

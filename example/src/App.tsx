@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { ChipTabs } from "../../src/ChipTabs";
-import type { TabProps } from "../../src/types";
+import type { ChipTabProps } from "../../src/types";
 import "./App.css";
 
 function App() {
     // Basic Tabs
-    const [basicTabs] = useState<TabProps[]>([
+    const [basicTabs] = useState<ChipTabProps[]>([
         { key: "all", label: "All" },
         { key: "trending", label: "Trending" },
         { key: "new", label: "New" },
@@ -30,7 +30,7 @@ function App() {
     const [basicSelected, setBasicSelected] = useState<string>("all");
 
     // Tabs with Close Buttons
-    const [closeableTabs, setCloseableTabs] = useState<TabProps[]>([
+    const [closeableTabs, setCloseableTabs] = useState<ChipTabProps[]>([
         { key: "home", label: "Home", hideCloseButton: true },
         { key: "workspace", label: "Workspace" },
         { key: "projects", label: "Projects" },
@@ -45,7 +45,7 @@ function App() {
     const [closeableSelected, setCloseableSelected] = useState<string>("home");
 
     // Scroll Mode Tabs
-    const [scrollTabs] = useState<TabProps[]>([
+    const [scrollTabs] = useState<ChipTabProps[]>([
         { key: "javascript", label: "JavaScript" },
         { key: "typescript", label: "TypeScript" },
         { key: "react", label: "React" },
@@ -62,7 +62,9 @@ function App() {
     const [scrollSelected, setScrollSelected] = useState<string>("javascript");
 
     // Scroll Mode with Close Buttons
-    const [scrollCloseableTabs, setScrollCloseableTabs] = useState<TabProps[]>([
+    const [scrollCloseableTabs, setScrollCloseableTabs] = useState<
+        ChipTabProps[]
+    >([
         { key: "tab1", label: "Overview" },
         { key: "tab2", label: "User Management System" },
         { key: "tab3", label: "Reports" },
@@ -77,10 +79,8 @@ function App() {
         { key: "tab12", label: "Notifications" },
     ]);
     const [scrollCloseableSelected, setScrollCloseableSelected] =
-        useState<string>("tab1");
-
-    // Draggable Tabs
-    const [draggableTabs, setDraggableTabs] = useState<TabProps[]>([
+        useState<string>("tab1"); // Draggable Tabs
+    const [draggableTabs, setDraggableTabs] = useState<ChipTabProps[]>([
         { key: "intro", label: "Introduction" },
         { key: "getting-started", label: "Getting Started" },
         { key: "installation", label: "Installation" },
@@ -200,6 +200,18 @@ function App() {
             setCloseableTabs((prev) => [...prev, newTab]);
             setCloseableSelected(newKey);
         }
+    };
+
+    const addScrollCloseableTab = () => {
+        const tabCount = scrollCloseableTabs.length;
+        const newKey = `tab${tabCount + 1}`;
+        const newTab: ChipTabProps = {
+            key: newKey,
+            label: `New Tab ${tabCount + 1}`,
+        };
+
+        setScrollCloseableTabs((prev) => [...prev, newTab]);
+        setScrollCloseableSelected(newKey);
     };
 
     const handleScrollCloseableTabClose = (key: string): boolean => {
@@ -433,8 +445,38 @@ function App() {
                                 scrollCloseableTabs[event.selectedIndex].key
                             )
                         }
+                        onLoaded={(cookieTabs, cookieSelectedKey) => {
+                            console.log("Loaded from cookies:", {
+                                cookieTabs,
+                                cookieSelectedKey,
+                            });
+                            setScrollCloseableTabs(cookieTabs);
+                            setScrollCloseableSelected(cookieSelectedKey);
+                        }}
                         onClose={handleScrollCloseableTabClose}
                     />
+                    <button
+                        onClick={addScrollCloseableTab}
+                        style={{
+                            marginTop: "1rem",
+                            padding: "0.5rem 1rem",
+                            backgroundColor: "#3b82f6",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "0.375rem",
+                            cursor: "pointer",
+                            fontSize: "0.875rem",
+                            fontWeight: "500",
+                        }}
+                        onMouseOver={(e) => {
+                            e.currentTarget.style.backgroundColor = "#2563eb";
+                        }}
+                        onMouseOut={(e) => {
+                            e.currentTarget.style.backgroundColor = "#3b82f6";
+                        }}
+                    >
+                        + Add Tab
+                    </button>
                     <div
                         style={{
                             marginTop: "1rem",
