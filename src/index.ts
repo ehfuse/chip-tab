@@ -1,6 +1,6 @@
 export { ChipTabs } from "./ChipTabs";
 export type {
-    ChipTabsProps as TabsProps,
+    ChipTabProps,
     ChipTabsProps,
     ChipTabsStyles,
     ChipTabStateStyles,
