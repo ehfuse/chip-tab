@@ -1,6 +1,6 @@
 {
     "name": "@ehfuse/chip-tabs",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "description": "A lightweight, customizable React tabs component with drag-and-drop, scroll navigation, keyboard support, and cookie persistence",
     "main": "dist/index.js",
     "module": "dist/index.esm.js",
